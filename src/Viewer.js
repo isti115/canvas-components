@@ -1,46 +1,34 @@
 import Component from './Components/Component.js'
 
-const collectHitRegions = (root, prefix) => {
-  const childrenHitRegions = root.children.map(
-    (c, i) => collectHitRegions(c, `${prefix}-${i++}`)
-  )
-
-  const transformedChildrenHitRegions = (
-    [].concat(...childrenHitRegions).map(
-      ({ path, id }) => {
-        const p = new window.Path2D()
-        p.addPath(path, root.transform)
-        return ({ path: p, id })
-      }
-    )
-  )
-
-  const transformedHitRegions = [
-    { path: root.path, id: prefix }
-  ].concat(
-    ...transformedChildrenHitRegions
-  )
-
-  return transformedHitRegions
-}
-
 const handleEvent = (type, e, root, [h, ...t]) => {
   let stopPropagation = false
 
-  for (const listener of root.eventListeners.capture[type]) {
+  for (const listener of root.element.eventListeners.capture[type]) {
     stopPropagation = listener(e)
   }
   if (stopPropagation) { return true }
 
   if (h !== undefined) {
-    stopPropagation = handleEvent(type, e, root.children[h], t)
+    stopPropagation = handleEvent(type, e, root.element.children[h], t)
   }
   if (stopPropagation) { return true }
 
-  for (const listener of root.eventListeners.bubble[type]) {
+  for (const listener of root.element.eventListeners.bubble[type]) {
     stopPropagation = listener(e)
   }
   if (stopPropagation) { return true }
+}
+
+const findTargets = (context, root, { x, y }) => {
+  const hitRegions = root.collectHitRegions('root')
+
+  const targets = hitRegions.filter(
+    ({ path, id }) => context.isPointInPath(path, x, y)
+  ).map(
+    ({ path, id }) => id
+  )
+
+  return targets
 }
 
 export default class Viewer {
@@ -59,21 +47,18 @@ export default class Viewer {
     this.active = false
     this.zoom = 1
 
-    this.handleClick = this.handleClick.bind(this)
-    this.handleMouseDown = this.handleMouseDown.bind(this)
-    this.handleMouseMove = this.handleMouseMove.bind(this)
-    this.handleMouseUp = this.handleMouseUp.bind(this)
-    this.canvas.addEventListener('click', this.handleClick)
-    this.canvas.addEventListener('mousedown', this.handleMouseDown)
-    this.canvas.addEventListener('mousemove', this.handleMouseMove)
-    this.canvas.addEventListener('mouseup', this.handleMouseUp)
+    this.handleMouseEvent = this.handleMouseEvent.bind(this)
+    this.canvas.addEventListener('click', this.handleMouseEvent)
+    this.canvas.addEventListener('mousedown', this.handleMouseEvent)
+    this.canvas.addEventListener('mousemove', this.handleMouseEvent)
+    this.canvas.addEventListener('mouseup', this.handleMouseEvent)
 
-    this.canvas.addEventListener('wheel', e => {
-      const direction = e.deltaY < 0 ? -1 : 1
-      this.zoom += direction * 0.5
+    // this.canvas.addEventListener('wheel', e => {
+    //   const direction = e.deltaY < 0 ? -1 : 1
+    //   this.zoom += direction * 0.5
 
-      this.context.setTransform(this.zoom, 0, 0, this.zoom, 0, 0)
-    })
+    //   this.context.setTransform(this.zoom, 0, 0, this.zoom, 0, 0)
+    // })
   }
 
   init (container) {
@@ -83,7 +68,7 @@ export default class Viewer {
 
   loop () {
     this.draw()
-    this.addHitRegions()
+    // this.addHitRegions()
 
     if (this.active) {
       window.requestAnimationFrame(() => this.loop())
@@ -92,7 +77,6 @@ export default class Viewer {
 
   start () {
     this.active = true
-    this.addHitRegions()
     this.loop()
   }
 
@@ -108,39 +92,34 @@ export default class Viewer {
   }
 
   addHitRegions () {
-    const hitRegions = collectHitRegions(this.root, 'root')
+    const hitRegions = this.root.collectHitRegions('root')
 
     for (const hitRegion of hitRegions) {
-      this.context.stroke(hitRegion.path)
+      // this.context.stroke(hitRegion.path)
       this.context.addHitRegion(hitRegion)
     }
   }
 
-  handleClick (e) {
-    if (e.region) {
-      const [, ...t] = e.region.split('-').map(Number)
-      handleEvent('click', e, this.root, t)
-    }
-  }
+  handleMouseEvent (e) {
+    // if (e.region) {
+    //   const [, ...t] = e.region.split('-').map(Number)
+    //   handleEvent(e.type, e, this.root, t)
+    // }
 
-  handleMouseDown (e) {
-    if (e.region) {
-      const [, ...t] = e.region.split('-').map(Number)
-      handleEvent('mousedown', e, this.root, t)
-    }
-  }
-
-  handleMouseMove (e) {
-    if (e.region) {
-      const [, ...t] = e.region.split('-').map(Number)
-      handleEvent('mousemove', e, this.root, t)
-    }
-  }
-
-  handleMouseUp (e) {
-    if (e.region) {
-      const [, ...t] = e.region.split('-').map(Number)
-      handleEvent('mouseup', e, this.root, t)
+    const targets = findTargets(this.context, this.root, { x: e.clientX, y: e.clientY })
+    const filteredTargets = targets.reduce(
+      ([previousTarget, ...rest], currentTarget) => {
+        if (currentTarget.startsWith(previousTarget)) {
+          return [currentTarget, ...rest]
+        } else {
+          return [currentTarget, previousTarget, ...rest]
+        }
+      },
+      ['']
+    ).filter(t => t !== '')
+    for (const target of filteredTargets) {
+      const [, ...t] = target.split('-').map(Number)
+      handleEvent(e.type, e, { element: this.root }, t)
     }
   }
 }

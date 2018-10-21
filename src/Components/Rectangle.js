@@ -1,8 +1,8 @@
 import Component from './Component.js'
 
 export default class Rectangle extends Component {
-  constructor (offset, { x, y, width, height }) {
-    super(offset)
+  constructor ({ x, y, width, height }) {
+    super()
 
     this.rect = { x, y, width, height }
   }

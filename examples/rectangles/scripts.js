@@ -12,16 +12,16 @@ class DraggableRectangle extends Rectangle {
     this.addEventListener('mousedown', e => {
       this.beingDragged = true
       this.draggedFrom = {
-        x: this.offset.left,
-        y: this.offset.top,
+        x: this.rect.x,
+        y: this.rect.y,
         clientX: e.clientX,
         clientY: e.clientY
       }
     })
     this.addEventListener('mousemove', e => {
       if (this.beingDragged) {
-        this.offset.left = this.draggedFrom.x + (e.clientX - this.draggedFrom.clientX)
-        this.offset.top = this.draggedFrom.y + (e.clientY - this.draggedFrom.clientY)
+        this.rect.x = this.draggedFrom.x + (e.clientX - this.draggedFrom.clientX)
+        this.rect.y = this.draggedFrom.y + (e.clientY - this.draggedFrom.clientY)
 
         return true
       }
@@ -42,10 +42,10 @@ const makeRandomRectangles = n => (
       const width = randBetween(50, 500)
       const height = randBetween(50, 500)
 
-      return new DraggableRectangle(
-        { left, top },
-        { x: 0, y: 0, width, height }
-      )
+      return {
+        element: new DraggableRectangle({ x: 0, y: 0, width, height }),
+        offset: { left, top }
+      }
     }
   )
 )
@@ -58,10 +58,10 @@ const makeSmallRandomRectangles = n => (
       const width = randBetween(50, 200)
       const height = randBetween(50, 200)
 
-      return new DraggableRectangle(
-        { left, top },
-        { x: 0, y: 0, width, height }
-      )
+      return {
+        element: new DraggableRectangle({ x: 0, y: 0, width, height }),
+        offset: { left, top }
+      }
     }
   )
 )
@@ -99,7 +99,7 @@ const init = () => {
   for (const draggableRectangle of draggableRectangles) {
     const children = makeSmallRandomRectangles(randBetween(0, 5))
     for (const child of children) {
-      draggableRectangle.addChild(child)
+      draggableRectangle.element.addChild(child)
     }
     viewer.root.addChild(draggableRectangle)
   }
