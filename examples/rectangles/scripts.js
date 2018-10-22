@@ -23,6 +23,7 @@ class DraggableRectangle extends Rectangle {
         this.rect.x = this.draggedFrom.x + (e.clientX - this.draggedFrom.clientX)
         this.rect.y = this.draggedFrom.y + (e.clientY - this.draggedFrom.clientY)
 
+        this.cache.clearAll()
         return true
       }
     })
@@ -43,7 +44,7 @@ const makeRandomRectangles = n => (
       const height = randBetween(50, 500)
 
       return {
-        element: new DraggableRectangle({ x: 0, y: 0, width, height }),
+        component: new DraggableRectangle({ x: 0, y: 0, width, height }),
         offset: { left, top }
       }
     }
@@ -59,7 +60,7 @@ const makeSmallRandomRectangles = n => (
       const height = randBetween(50, 200)
 
       return {
-        element: new DraggableRectangle({ x: 0, y: 0, width, height }),
+        component: new DraggableRectangle({ x: 0, y: 0, width, height }),
         offset: { left, top }
       }
     }
@@ -99,7 +100,7 @@ const init = () => {
   for (const draggableRectangle of draggableRectangles) {
     const children = makeSmallRandomRectangles(randBetween(0, 5))
     for (const child of children) {
-      draggableRectangle.element.addChild(child)
+      draggableRectangle.component.addChild(child)
     }
     viewer.root.addChild(draggableRectangle)
   }

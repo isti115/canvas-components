@@ -3,17 +3,17 @@ import Component from './Components/Component.js'
 const handleEvent = (type, e, root, [h, ...t]) => {
   let stopPropagation = false
 
-  for (const listener of root.element.eventListeners.capture[type]) {
+  for (const listener of root.component.eventListeners.capture[type]) {
     stopPropagation = listener(e)
   }
   if (stopPropagation) { return true }
 
   if (h !== undefined) {
-    stopPropagation = handleEvent(type, e, root.element.children[h], t)
+    stopPropagation = handleEvent(type, e, root.component.children[h], t)
   }
   if (stopPropagation) { return true }
 
-  for (const listener of root.element.eventListeners.bubble[type]) {
+  for (const listener of root.component.eventListeners.bubble[type]) {
     stopPropagation = listener(e)
   }
   if (stopPropagation) { return true }
@@ -105,6 +105,7 @@ export default class Viewer {
     //   const [, ...t] = e.region.split('-').map(Number)
     //   handleEvent(e.type, e, this.root, t)
     // }
+    this.root.cache.clearAll()
 
     const targets = findTargets(this.context, this.root, { x: e.clientX, y: e.clientY })
     const filteredTargets = targets.reduce(
@@ -117,9 +118,10 @@ export default class Viewer {
       },
       ['']
     ).filter(t => t !== '')
+
     for (const target of filteredTargets) {
       const [, ...t] = target.split('-').map(Number)
-      handleEvent(e.type, e, { element: this.root }, t)
+      handleEvent(e.type, e, { component: this.root }, t)
     }
   }
 }

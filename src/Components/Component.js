@@ -4,8 +4,10 @@ const eventTypes = [
   'click',
   'mousedown',
   'mousemove',
-  'heldmousemove',
-  'mouseup'
+  'mouseup',
+  'mouseholddown',
+  'mouseholdmove',
+  'mouseholdup'
 ]
 
 const emptyEventListeners = eventTypes.reduce(
@@ -20,6 +22,25 @@ export default class Component {
     this.eventListeners = {
       capture: { ...emptyEventListeners },
       bubble: { ...emptyEventListeners }
+    }
+
+    this.cache = {
+      data: {},
+      get: (id, compute) => {
+        if (this.cache.data[id] === undefined) {
+          this.cache.data[id] = compute()
+        }
+
+        return this.cache.data[id]
+
+        // return compute()
+      },
+      clear: (id) => {
+        delete this.cache.data[id]
+      },
+      clearAll: (id) => {
+        this.cache.data = {}
+      }
     }
   }
 
@@ -46,9 +67,16 @@ export default class Component {
     return new window.Path2D()
   }
 
-  get transformedChildrenPaths () {
+  get _transformedChildrenPaths () {
     return this.children.map(
-      ({ element, offset }) => offsetPath(offset, element.path)
+      ({ component, offset }) => offsetPath(offset, component.path)
+    )
+  }
+
+  get transformedChildrenPaths () {
+    return this.cache.get(
+      'transformedChildrenPaths',
+      () => this._transformedChildrenPaths
     )
   }
 
@@ -61,9 +89,9 @@ export default class Component {
     return path
   }
 
-  collectHitRegions (prefix) {
+  _collectHitRegions (prefix) {
     const transformedChildrenHitRegions = this.children.map(
-      (c, i) => c.element.collectHitRegions(`${prefix}-${i++}`).map(
+      (c, i) => c.component.collectHitRegions(`${prefix}-${i++}`).map(
         ({ path, id }) => ({
           path: offsetPath(c.offset, path),
           id
@@ -78,6 +106,13 @@ export default class Component {
     )
 
     return transformedHitRegions
+  }
+
+  collectHitRegions (prefix) {
+    return this.cache.get(
+      'collectHitRegions',
+      () => this._collectHitRegions(prefix)
+    )
   }
 
   addEventListener (type, listener, useCapture = false) {
