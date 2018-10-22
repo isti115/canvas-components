@@ -1,6 +1,6 @@
 import Component from './Components/Component.js'
 
-const handleEvent = (type, e, root, [h, ...t]) => {
+const handleEvent_ = (type, e, root, [h, ...t]) => {
   let stopPropagation = false
 
   for (const listener of root.component.eventListeners.capture[type]) {
@@ -9,7 +9,7 @@ const handleEvent = (type, e, root, [h, ...t]) => {
   if (stopPropagation) { return true }
 
   if (h !== undefined) {
-    stopPropagation = handleEvent(type, e, root.component.children[h], t)
+    stopPropagation = handleEvent_(type, e, root.component.children[h], t)
   }
   if (stopPropagation) { return true }
 
@@ -17,6 +17,23 @@ const handleEvent = (type, e, root, [h, ...t]) => {
     stopPropagation = listener(e)
   }
   if (stopPropagation) { return true }
+}
+
+const handleEvent = (type, e, root) => {
+  const captureStopPropagation = root.component.eventListeners.capture[type].map(
+    listener => listener(e)
+  )
+  if (captureStopPropagation.some(x => x)) { return true }
+
+  const childrenStopPropagation = root.childrenWithPointInPath.map(
+    child => handleEvent(type, e, child)
+  )
+  if (childrenStopPropagation.some(x => x)) { return true }
+
+  const bubbleStopPropagation = root.component.eventListeners.bubble[type].map(
+    listener => listener(e)
+  )
+  if (bubbleStopPropagation.some(x => x)) { return true }
 }
 
 const findTargets = (context, root, { x, y }) => {
@@ -42,7 +59,8 @@ export default class Viewer {
 
     this.context = this.canvas.getContext('2d', { alpha: false })
 
-    this.root = new Component({ left: 0, top: 0 })
+    this.root = new Component()
+    this.heldComponents = undefined
 
     this.active = false
     this.zoom = 1
@@ -100,13 +118,14 @@ export default class Viewer {
     }
   }
 
-  handleMouseEvent (e) {
-    // if (e.region) {
-    //   const [, ...t] = e.region.split('-').map(Number)
-    //   handleEvent(e.type, e, this.root, t)
-    // }
-    this.root.cache.clearAll()
+  handleMouseEventHitRegion (e) {
+    if (e.region) {
+      const [, ...t] = e.region.split('-').map(Number)
+      handleEvent_(e.type, e, { component: this.root }, t)
+    }
+  }
 
+  handleMouseEventBasicIsPointInPath (e) {
     const targets = findTargets(this.context, this.root, { x: e.clientX, y: e.clientY })
     const filteredTargets = targets.reduce(
       ([previousTarget, ...rest], currentTarget) => {
@@ -121,7 +140,30 @@ export default class Viewer {
 
     for (const target of filteredTargets) {
       const [, ...t] = target.split('-').map(Number)
-      handleEvent(e.type, e, { component: this.root }, t)
+      handleEvent_(e.type, e, { component: this.root }, t)
+    }
+  }
+
+  handleMouseEvent (e) {
+    this.root.cache.clearAll()
+
+    const childrenWithPointInPath = this.root.getChildrenWithPointInPath(
+      (path, point) => this.context.isPointInPath(path, point.x, point.y),
+      { x: e.clientX, y: e.clientY }
+    )
+
+    handleEvent(e.type, e, childrenWithPointInPath)
+
+    if (e.type === 'mousedown') {
+      this.heldComponents = childrenWithPointInPath
+    }
+
+    if (e.type === 'mousemove' && this.heldComponents !== undefined) {
+      handleEvent('heldmousemove', e, this.heldComponents)
+    }
+
+    if (e.type === 'mouseup') {
+      this.heldComponents = undefined
     }
   }
 }

@@ -18,13 +18,12 @@ class DraggableRectangle extends Rectangle {
         clientY: e.clientY
       }
     })
-    this.addEventListener('mousemove', e => {
+    this.addEventListener('heldmousemove', e => {
       if (this.beingDragged) {
         this.rect.x = this.draggedFrom.x + (e.clientX - this.draggedFrom.clientX)
         this.rect.y = this.draggedFrom.y + (e.clientY - this.draggedFrom.clientY)
 
         this.cache.clearAll()
-        return true
       }
     })
     this.addEventListener('mouseup', () => {
@@ -40,8 +39,8 @@ const makeRandomRectangles = n => (
     x => {
       const left = randBetween(100, 1000)
       const top = randBetween(50, 700)
-      const width = randBetween(50, 500)
-      const height = randBetween(50, 500)
+      const width = randBetween(200, 500)
+      const height = randBetween(200, 500)
 
       return {
         component: new DraggableRectangle({ x: 0, y: 0, width, height }),
@@ -56,8 +55,8 @@ const makeSmallRandomRectangles = n => (
     x => {
       const left = randBetween(10, 100)
       const top = randBetween(10, 100)
-      const width = randBetween(50, 200)
-      const height = randBetween(50, 200)
+      const width = randBetween(50, 100)
+      const height = randBetween(50, 100)
 
       return {
         component: new DraggableRectangle({ x: 0, y: 0, width, height }),

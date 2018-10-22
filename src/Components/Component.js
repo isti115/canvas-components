@@ -4,10 +4,8 @@ const eventTypes = [
   'click',
   'mousedown',
   'mousemove',
-  'mouseup',
-  'mouseholddown',
-  'mouseholdmove',
-  'mouseholdup'
+  'heldmousemove',
+  'mouseup'
 ]
 
 const emptyEventListeners = eventTypes.reduce(
@@ -87,6 +85,33 @@ export default class Component {
     path.addPath(joinPaths(this.transformedChildrenPaths))
 
     return path
+  }
+
+  getChildrenWithPointInPath (test, point) {
+    const filteredChildren = this.children.filter(c =>
+      test(
+        c.component.path,
+        {
+          x: point.x - c.offset.left,
+          y: point.y - c.offset.top
+        }
+      )
+    )
+
+    const childrenWithPointInPath = filteredChildren.map(
+      c => c.component.getChildrenWithPointInPath(
+        test,
+        {
+          x: point.x - c.offset.left,
+          y: point.y - c.offset.top
+        }
+      )
+    )
+
+    return {
+      component: this,
+      childrenWithPointInPath
+    }
   }
 
   _collectHitRegions (prefix) {
