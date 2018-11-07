@@ -1,24 +1,5 @@
 import Component from './Components/Component.js'
 
-const handleEvent_ = (type, e, root, [h, ...t]) => {
-  let stopPropagation = false
-
-  for (const listener of root.component.eventListeners.capture[type]) {
-    stopPropagation = listener(e)
-  }
-  if (stopPropagation) { return true }
-
-  if (h !== undefined) {
-    stopPropagation = handleEvent_(type, e, root.component.children[h], t)
-  }
-  if (stopPropagation) { return true }
-
-  for (const listener of root.component.eventListeners.bubble[type]) {
-    stopPropagation = listener(e)
-  }
-  if (stopPropagation) { return true }
-}
-
 const handleEvent = (type, e, root) => {
   const captureStopPropagation = root.component.eventListeners.capture[type].map(
     listener => listener(e)
@@ -34,18 +15,6 @@ const handleEvent = (type, e, root) => {
     listener => listener(e)
   )
   if (bubbleStopPropagation.some(x => x)) { return true }
-}
-
-const findTargets = (context, root, { x, y }) => {
-  const hitRegions = root.collectHitRegions('root')
-
-  const targets = hitRegions.filter(
-    ({ path, id }) => context.isPointInPath(path, x, y)
-  ).map(
-    ({ path, id }) => id
-  )
-
-  return targets
 }
 
 export default class Viewer {
@@ -86,7 +55,6 @@ export default class Viewer {
 
   loop () {
     this.draw()
-    // this.addHitRegions()
 
     if (this.active) {
       window.requestAnimationFrame(() => this.loop())
@@ -106,7 +74,9 @@ export default class Viewer {
     this.context.fillStyle = '#ffffff'
     this.context.fillRect(0, 0, this.width / this.zoom, this.height / this.zoom)
     // this.context.clearRect(0, 0, this.width / this.zoom, this.height / this.zoom)
-    this.context.stroke(this.root.path)
+    this.context.beginPath()
+    const path = this.root.path
+    this.context.stroke(path)
   }
 
   addHitRegions () {
@@ -118,35 +88,7 @@ export default class Viewer {
     }
   }
 
-  handleMouseEventHitRegion (e) {
-    if (e.region) {
-      const [, ...t] = e.region.split('-').map(Number)
-      handleEvent_(e.type, e, { component: this.root }, t)
-    }
-  }
-
-  handleMouseEventBasicIsPointInPath (e) {
-    const targets = findTargets(this.context, this.root, { x: e.clientX, y: e.clientY })
-    const filteredTargets = targets.reduce(
-      ([previousTarget, ...rest], currentTarget) => {
-        if (currentTarget.startsWith(previousTarget)) {
-          return [currentTarget, ...rest]
-        } else {
-          return [currentTarget, previousTarget, ...rest]
-        }
-      },
-      ['']
-    ).filter(t => t !== '')
-
-    for (const target of filteredTargets) {
-      const [, ...t] = target.split('-').map(Number)
-      handleEvent_(e.type, e, { component: this.root }, t)
-    }
-  }
-
   handleMouseEvent (e) {
-    this.root.cache.clearAll()
-
     const childrenWithPointInPath = this.root.getChildrenWithPointInPath(
       (path, point) => this.context.isPointInPath(path, point.x, point.y),
       { x: e.clientX, y: e.clientY }
