@@ -1,37 +1,5 @@
 import CanvasComponents from '../../index.js'
 
-const { Viewer, Components } = CanvasComponents
-const { Rectangle } = Components
-
-class DraggableRectangle extends Rectangle {
-  constructor (offset, rect) {
-    super(offset, rect)
-
-    this.beingDragged = false
-    this.draggedFrom = { x: 0, y: 0, clientX: 0, clientY: 0 }
-    this.addEventListener('mousedown', e => {
-      this.beingDragged = true
-      this.draggedFrom = {
-        x: this.rect.x,
-        y: this.rect.y,
-        clientX: e.clientX,
-        clientY: e.clientY
-      }
-    })
-    this.addEventListener('heldmousemove', e => {
-      if (this.beingDragged) {
-        this.rect.x = this.draggedFrom.x + (e.clientX - this.draggedFrom.clientX)
-        this.rect.y = this.draggedFrom.y + (e.clientY - this.draggedFrom.clientY)
-
-        this.cache.clearAll()
-      }
-    })
-    this.addEventListener('mouseup', () => {
-      this.beingDragged = false
-    })
-  }
-}
-
 const randBetween = (n, m) => n + Math.floor(m * Math.random())
 
 const makeRandomRectangles = n => (
@@ -42,66 +10,49 @@ const makeRandomRectangles = n => (
       const width = randBetween(200, 500)
       const height = randBetween(200, 500)
 
-      return {
-        component: new DraggableRectangle({ x: 0, y: 0, width, height }),
-        offset: { left, top }
-      }
+      return new CanvasComponents.Components.Draggable({
+        component: new CanvasComponents.Components.Rectangle({ width, height }),
+        componentOffset: { left, top }
+      })
     }
   )
 )
 
-const makeSmallRandomRectangles = n => (
+const makeRandomCircles = n => (
   [...Array(n)].map(
     x => {
-      const left = randBetween(10, 100)
-      const top = randBetween(10, 100)
-      const width = randBetween(50, 100)
-      const height = randBetween(50, 100)
+      const left = randBetween(50, 450)
+      const top = randBetween(50, 450)
+      const radius = randBetween(10, 50)
 
-      return {
-        component: new DraggableRectangle({ x: 0, y: 0, width, height }),
-        offset: { left, top }
-      }
+      return new CanvasComponents.Components.Draggable({
+        component: new CanvasComponents.Components.Circle({ radius }),
+        componentOffset: { left, top }
+      })
     }
   )
 )
 
-// const oldInit = viewer => {
-//   const rectangle = new DraggableRectangle(
-//     { left: 100, top: 20 },
-//     { x: 0, y: 0, width: 200, height: 300 }
-//   )
-//   viewer.root.addChild(rectangle)
-//   rectangle.addEventListener('click', () => {
-//     console.log('sajt')
-//     rectangle.rect.width = 50 + Math.floor(Math.random() * 100)
-//   })
-
-//   const a = new DraggableRectangle(
-//     { left: 0, top: 0 },
-//     { x: 20, y: 40, width: 50, height: 50 }
-//   )
-//   viewer.root.addChild(a)
-
-//   const b = new Rectangle(
-//     { left: 70, top: 25 },
-//     { x: 0, y: 0, width: 50, height: 50 }
-//   )
-//   rectangle.addChild(b)
-// }
-
 const init = () => {
-  const viewer = new Viewer(1500, 850)
+  const width = window.document.body.clientWidth
+  const height = window.document.body.clientHeight
+  const viewer = new CanvasComponents.Viewer(width, height)
 
   viewer.init(window.document.body)
 
-  const draggableRectangles = makeRandomRectangles(10)
+  const draggableRectangles = makeRandomRectangles(1000)
   for (const draggableRectangle of draggableRectangles) {
-    const children = makeSmallRandomRectangles(randBetween(0, 5))
-    for (const child of children) {
-      draggableRectangle.component.addChild(child)
+    const draggableCircles = makeRandomCircles(randBetween(5, 5))
+    for (const draggableCircle of draggableCircles) {
+      draggableRectangle.component.addChild({
+        component: draggableCircle,
+        offset: { left: 0, top: 0 }
+      })
     }
-    viewer.root.addChild(draggableRectangle)
+    viewer.root.addChild({
+      component: draggableRectangle,
+      offset: { left: 0, top: 0 }
+    })
   }
 
   viewer.start()

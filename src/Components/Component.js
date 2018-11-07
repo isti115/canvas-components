@@ -1,3 +1,4 @@
+import Cache from '../Cache.js'
 import { joinPaths, offsetPath } from '../utilities.js'
 
 const eventTypes = [
@@ -5,7 +6,9 @@ const eventTypes = [
   'mousedown',
   'mousemove',
   'heldmousemove',
-  'mouseup'
+  'mouseup',
+  //
+  'cacheclear'
 ]
 
 const emptyEventListeners = eventTypes.reduce(
@@ -22,43 +25,18 @@ export default class Component {
       bubble: { ...emptyEventListeners }
     }
 
-    this.cache = {
-      data: {},
-      get: (id, compute) => {
-        if (this.cache.data[id] === undefined) {
-          this.cache.data[id] = compute()
-        }
-
-        return this.cache.data[id]
-
-        // return compute()
-      },
-      clear: (id) => {
-        delete this.cache.data[id]
-      },
-      clearAll: (id) => {
-        this.cache.data = {}
-      }
-    }
+    this.cache = new Cache()
   }
 
   addChild (child) {
     this.children = [...this.children, child]
+    child.component.addEventListener('cacheclear', () => {
+      this.clearCache()
+    })
   }
 
   removeChild (child) {
     this.children = this.children.filter(c => c !== child)
-  }
-
-  get transform () {
-    return {
-      a: 1,
-      b: 0,
-      c: 0,
-      d: 1,
-      e: this.offset.left,
-      f: this.offset.top
-    }
   }
 
   get selfPath () {
@@ -78,13 +56,27 @@ export default class Component {
     )
   }
 
-  get path () {
+  get _path () {
     const path = new window.Path2D()
 
     path.addPath(this.selfPath)
     path.addPath(joinPaths(this.transformedChildrenPaths))
 
     return path
+  }
+
+  get path () {
+    return this.cache.get(
+      'path',
+      () => this._path
+    )
+  }
+
+  clearCache () {
+    this.cache.clearAll()
+    this.eventListeners.bubble['cacheclear'].map(
+      e => e()
+    )
   }
 
   getChildrenWithPointInPath (test, point) {
@@ -112,32 +104,6 @@ export default class Component {
       component: this,
       childrenWithPointInPath
     }
-  }
-
-  _collectHitRegions (prefix) {
-    const transformedChildrenHitRegions = this.children.map(
-      (c, i) => c.component.collectHitRegions(`${prefix}-${i++}`).map(
-        ({ path, id }) => ({
-          path: offsetPath(c.offset, path),
-          id
-        })
-      )
-    )
-
-    const transformedHitRegions = [
-      { path: this.path, id: prefix }
-    ].concat(
-      ...transformedChildrenHitRegions
-    )
-
-    return transformedHitRegions
-  }
-
-  collectHitRegions (prefix) {
-    return this.cache.get(
-      'collectHitRegions',
-      () => this._collectHitRegions(prefix)
-    )
   }
 
   addEventListener (type, listener, useCapture = false) {
