@@ -16,14 +16,25 @@ export const joinPaths = paths => {
 //     new window.Path2D()
 //   )
 
-export const offsetToTransformationMatrix = offset => ({
-  a: 1,
-  b: 0,
-  c: 0,
-  d: 1,
-  e: offset.left,
-  f: offset.top
-})
+export const offsetToTransformationMatrix = offset => (
+  new window.DOMMatrix([
+    1,
+    0,
+    0,
+    1,
+    offset.left,
+    offset.top
+  ])
+)
+
+// export const offsetToTransformationMatrix = offset => ({
+//   a: 1,
+//   b: 0,
+//   c: 0,
+//   d: 1,
+//   e: offset.left,
+//   f: offset.top
+// })
 
 export const offsetPath = (offset, oldPath) => {
   const newPath = new window.Path2D()
