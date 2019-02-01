@@ -72,6 +72,15 @@ export default class Component {
     )
   }
 
+  draw (context) {
+    context.stroke(this.selfPath)
+    this.children.forEach(c => {
+      context.transform(1, 0, 0, 1, c.offset.left, c.offset.top)
+      c.component.draw(context)
+      context.transform(1, 0, 0, 1, -c.offset.left, -c.offset.top)
+    })
+  }
+
   clearCache () {
     this.cache.clearAll()
     this.eventListeners.bubble['cacheclear'].map(

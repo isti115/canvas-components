@@ -75,8 +75,9 @@ export default class Viewer {
     this.context.fillRect(0, 0, this.width / this.zoom, this.height / this.zoom)
     // this.context.clearRect(0, 0, this.width / this.zoom, this.height / this.zoom)
     this.context.beginPath()
-    const path = this.root.path
-    this.context.stroke(path)
+    this.root.draw(this.context)
+    // const path = this.root.path
+    // this.context.stroke(path)
   }
 
   addHitRegions () {
