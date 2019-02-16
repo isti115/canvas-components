@@ -32,4 +32,13 @@ export default class Draggable extends Component {
 
     this.addChild({ component: this.component, offset: this.componentOffset })
   }
+
+  get selfDimensions () {
+    return {
+      top: this.componentOffset.top,
+      right: this.componentOffset.left,
+      bottom: this.componentOffset.top,
+      left: this.componentOffset.left
+    }
+  }
 }

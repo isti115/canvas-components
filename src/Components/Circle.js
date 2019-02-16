@@ -14,4 +14,13 @@ export default class Circle extends Component {
 
     return path
   }
+
+  get selfDimensions () {
+    return {
+      top: -this.circle.radius,
+      right: this.circle.radius,
+      bottom: this.circle.radius,
+      left: -this.circle.radius
+    }
+  }
 }

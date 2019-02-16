@@ -4,14 +4,23 @@ export default class Rectangle extends Component {
   constructor ({ x, y, width, height }) {
     super()
 
-    this.properties = { x, y, width, height }
+    this.rectangle = { width, height }
   }
 
   get selfPath () {
     const path = new window.Path2D()
 
-    path.rect(0, 0, this.properties.width, this.properties.height)
+    path.rect(0, 0, this.rectangle.width, this.rectangle.height)
 
     return path
+  }
+
+  get selfDimensions () {
+    return {
+      top: 0,
+      right: this.rectangle.width,
+      bottom: this.rectangle.height,
+      left: 0
+    }
   }
 }

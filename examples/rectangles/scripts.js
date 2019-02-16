@@ -36,13 +36,15 @@ const makeRandomCircles = n => (
 const init = () => {
   const width = window.document.body.clientWidth
   const height = window.document.body.clientHeight
+  // const width = 1920
+  // const height = 1080
   const viewer = new CanvasComponents.Viewer(width, height)
 
   viewer.init(window.document.body)
 
-  const draggableRectangles = makeRandomRectangles(1000)
+  const draggableRectangles = makeRandomRectangles(1)
   for (const draggableRectangle of draggableRectangles) {
-    const draggableCircles = makeRandomCircles(randBetween(5, 5))
+    const draggableCircles = makeRandomCircles(randBetween(0, 0))
     for (const draggableCircle of draggableCircles) {
       draggableRectangle.component.addChild({
         component: draggableCircle,
@@ -55,9 +57,9 @@ const init = () => {
     })
   }
 
-  viewer.start()
-
   window.v = viewer
+
+  viewer.start()
 }
 
 window.addEventListener('load', init, false)
