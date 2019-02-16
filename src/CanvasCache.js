@@ -22,6 +22,8 @@ export default class CanvasCache {
   setDimensions ({ width, height }) {
     this.canvas.width = width
     this.canvas.height = height
+    // this.canvas.width = Math.max(width, 512)
+    // this.canvas.height = Math.max(height, 512)
   }
 
   clear () {

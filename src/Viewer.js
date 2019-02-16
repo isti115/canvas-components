@@ -71,6 +71,7 @@ export default class Viewer {
   }
 
   draw () {
+    // this.canvas.width = this.width
     this.context.fillStyle = '#ffffff'
     this.context.fillRect(0, 0, this.width / this.zoom, this.height / this.zoom)
     // this.context.clearRect(0, 0, this.width / this.zoom, this.height / this.zoom)

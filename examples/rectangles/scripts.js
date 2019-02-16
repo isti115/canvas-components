@@ -42,9 +42,9 @@ const init = () => {
 
   viewer.init(window.document.body)
 
-  const draggableRectangles = makeRandomRectangles(1)
+  const draggableRectangles = makeRandomRectangles(300)
   for (const draggableRectangle of draggableRectangles) {
-    const draggableCircles = makeRandomCircles(randBetween(0, 0))
+    const draggableCircles = makeRandomCircles(randBetween(3, 3))
     for (const draggableCircle of draggableCircles) {
       draggableRectangle.component.addChild({
         component: draggableCircle,
@@ -58,7 +58,10 @@ const init = () => {
   }
 
   window.v = viewer
+  window.d = viewer.root.children[0].component
+  window.r = viewer.root.children[0].component.children[0].component
 
+  // viewer.draw()
   viewer.start()
 }
 

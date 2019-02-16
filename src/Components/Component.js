@@ -19,6 +19,24 @@ const emptyEventListeners = eventTypes.reduce(
 
 export default class Component {
   constructor () {
+    this.cached = this.cached.bind(this)
+    this.addChild = this.addChild.bind(this)
+    this.removeChild = this.removeChild.bind(this)
+    // this.selfPath = this.selfPath.bind(this)
+    // this.selfDimensions = this.selfDimensions.bind(this)
+    // this._dimensions = this._dimensions.bind(this)
+    // this.dimensions = this.dimensions.bind(this)
+    // this._transformedChildrenPaths = this._transformedChildrenPaths.bind(this)
+    // this.transformedChildrenPaths = this.transformedChildrenPaths.bind(this)
+    // this._path = this._path.bind(this)
+    // this.path = this.path.bind(this)
+    // this._image = this._image.bind(this)
+    // this.image = this.image.bind(this)
+    this.clearCache = this.clearCache.bind(this)
+    this.getChildrenWithPointInPath = this.getChildrenWithPointInPath.bind(this)
+    this.addEventListener = this.addEventListener.bind(this)
+    this.removeEventListener = this.removeEventListener.bind(this)
+
     this.children = []
 
     this.eventListeners = {
@@ -28,6 +46,10 @@ export default class Component {
 
     this.canvasCache = new CanvasCache(0, 0)
     this.cache = new Cache()
+  }
+
+  cached (property) {
+    return this.cache.get(property, () => this[`_${property}`])
   }
 
   addChild (child) {
@@ -54,7 +76,7 @@ export default class Component {
     }
   }
 
-  get dimensions () {
+  get _dimensions () {
     return {
       top: Math.min(...this.children.map(
         c => c.offset.top + c.component.dimensions.top
@@ -71,18 +93,15 @@ export default class Component {
     }
   }
 
+  get dimensions () { return this.cached('dimensions') }
+
   get _transformedChildrenPaths () {
     return this.children.map(
       ({ component, offset }) => utilities.offsetPath(offset, component.path)
     )
   }
 
-  get transformedChildrenPaths () {
-    return this.cache.get(
-      'transformedChildrenPaths',
-      () => this._transformedChildrenPaths
-    )
-  }
+  get transformedChildrenPaths () { return this.cached('transformedChildrenPaths') }
 
   get _path () {
     const path = new window.Path2D()
@@ -93,12 +112,7 @@ export default class Component {
     return path
   }
 
-  get path () {
-    return this.cache.get(
-      'path',
-      () => this._path
-    )
-  }
+  get path () { return this.cached('path') }
 
   get _image () {
     this.canvasCache.setDimensions({
@@ -115,18 +129,20 @@ export default class Component {
     ))
 
     this.children.forEach(child => {
-      this.canvasCache.drawImage(child.component.image, child.offset)
+      this.canvasCache.drawImage(
+        child.component.image,
+        {
+          left: child.offset.left - this.dimensions.left + child.component.dimensions.left,
+          top: child.offset.top - this.dimensions.top + child.component.dimensions.top
+        }
+      )
     })
 
     return this.canvasCache.image
   }
 
   get image () {
-    return this._image
-    // this.cache.get(
-    //   'image',
-    //   () => this._image
-    // )
+    return this.cached('image')
   }
 
   clearCache () {
